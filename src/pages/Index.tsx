@@ -13,7 +13,7 @@ const games = [
     price: 1999,
     discount: 30,
     genre: "RPG",
-    image: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=400&h=250&fit=crop",
+    image: "/img/4d5ad517-35c7-446f-8044-2584b453ebe2.jpg",
     isNew: true
   },
   {
@@ -22,7 +22,7 @@ const games = [
     price: 1499,
     discount: 50,
     genre: "Racing",
-    image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=250&fit=crop",
+    image: "/img/49331fa8-5a18-41b1-a40a-25b8965da1ff.jpg",
     isNew: false
   },
   {
@@ -31,7 +31,7 @@ const games = [
     price: 2499,
     discount: 0,
     genre: "Shooter",
-    image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=250&fit=crop",
+    image: "/img/46055c7c-8480-48a7-83cc-2fe80b85623e.jpg",
     isNew: true
   },
   {
@@ -40,7 +40,7 @@ const games = [
     price: 1799,
     discount: 25,
     genre: "Strategy",
-    image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&h=250&fit=crop",
+    image: "/img/636a75ca-c7fb-4aad-9a05-e0fbbc338dcc.jpg",
     isNew: false
   },
   {
@@ -49,7 +49,7 @@ const games = [
     price: 2199,
     discount: 15,
     genre: "Adventure",
-    image: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=250&fit=crop",
+    image: "/img/b82fe8e3-27c2-4a6e-97a2-653f58f517f4.jpg",
     isNew: true
   },
   {
@@ -58,7 +58,7 @@ const games = [
     price: 1299,
     discount: 40,
     genre: "Indie",
-    image: "https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?w=400&h=250&fit=crop",
+    image: "/img/c8bcb902-1850-4c72-841c-f2b29bece52a.jpg",
     isNew: false
   }
 ];
