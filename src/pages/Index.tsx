@@ -256,56 +256,57 @@ const Index = () => {
                     )}
                   </Button>
                 </SheetTrigger>
-              <SheetContent className="bg-cyber-dark border-primary/30 w-full sm:max-w-md">
-                <SheetHeader>
-                  <SheetTitle className="text-primary neon-glow">Корзина</SheetTitle>
-                </SheetHeader>
-                
-                <div className="mt-8 space-y-4">
-                  {cart.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">Корзина пуста</p>
-                  ) : (
-                    <>
-                      {cart.map((item) => (
-                        <div key={item.id} className="flex gap-4 p-3 rounded-lg bg-muted/20 border border-primary/20">
-                          <img src={item.image} alt={item.title} className="w-20 h-20 object-cover rounded" />
-                          <div className="flex-1">
-                            <h4 className="font-bold text-foreground">{item.title}</h4>
-                            <p className="text-primary font-bold">
-                              {item.discount > 0 
-                                ? Math.round(item.price * (1 - item.discount / 100))
-                                : item.price}₽
-                            </p>
+                <SheetContent className="bg-cyber-dark border-primary/30 w-full sm:max-w-md">
+                  <SheetHeader>
+                    <SheetTitle className="text-primary neon-glow">Корзина</SheetTitle>
+                  </SheetHeader>
+                  
+                  <div className="mt-8 space-y-4">
+                    {cart.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">Корзина пуста</p>
+                    ) : (
+                      <>
+                        {cart.map((item) => (
+                          <div key={item.id} className="flex gap-4 p-3 rounded-lg bg-muted/20 border border-primary/20">
+                            <img src={item.image} alt={item.title} className="w-20 h-20 object-cover rounded" />
+                            <div className="flex-1">
+                              <h4 className="font-bold text-foreground">{item.title}</h4>
+                              <p className="text-primary font-bold">
+                                {item.discount > 0 
+                                  ? Math.round(item.price * (1 - item.discount / 100))
+                                  : item.price}₽
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeFromCart(item.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Icon name="Trash2" size={18} />
+                            </Button>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeFromCart(item.id)}
-                            className="text-destructive hover:text-destructive"
+                        ))}
+                        
+                        <div className="border-t border-primary/30 pt-4 mt-4">
+                          <div className="flex justify-between text-lg font-bold mb-4">
+                            <span className="text-foreground">Итого:</span>
+                            <span className="text-primary neon-glow">{getTotalPrice()}₽</span>
+                          </div>
+                          <Button 
+                            onClick={() => setIsPaymentOpen(true)}
+                            className="w-full neon-border bg-primary text-primary-foreground hover:bg-primary/90"
                           >
-                            <Icon name="Trash2" size={18} />
+                            <Icon name="CreditCard" size={20} className="mr-2" />
+                            Оплатить
                           </Button>
                         </div>
-                      ))}
-                      
-                      <div className="border-t border-primary/30 pt-4 mt-4">
-                        <div className="flex justify-between text-lg font-bold mb-4">
-                          <span className="text-foreground">Итого:</span>
-                          <span className="text-primary neon-glow">{getTotalPrice()}₽</span>
-                        </div>
-                        <Button 
-                          onClick={() => setIsPaymentOpen(true)}
-                          className="w-full neon-border bg-primary text-primary-foreground hover:bg-primary/90"
-                        >
-                          <Icon name="CreditCard" size={20} className="mr-2" />
-                          Оплатить
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
+                      </>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </header>
