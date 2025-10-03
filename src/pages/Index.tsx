@@ -4,9 +4,26 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
-const games = [
+interface Game {
+  id: number;
+  title: string;
+  price: number;
+  discount: number;
+  genre: string;
+  image: string;
+  isNew: boolean;
+}
+
+interface CartItem extends Game {
+  quantity: number;
+}
+
+const games: Game[] = [
   {
     id: 1,
     title: "Cyber Nexus 2084",
@@ -68,6 +85,15 @@ const genres = ["Все", "RPG", "Shooter", "Racing", "Strategy", "Adventure", "
 const Index = () => {
   const [selectedGenre, setSelectedGenre] = useState("Все");
   const [searchQuery, setSearchQuery] = useState("");
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [paymentData, setPaymentData] = useState({
+    cardNumber: '',
+    cardName: '',
+    expiry: '',
+    cvv: ''
+  });
+  const { toast } = useToast();
 
   const filteredGames = games.filter(game => {
     const matchesGenre = selectedGenre === "Все" || game.genre === selectedGenre;
@@ -77,6 +103,100 @@ const Index = () => {
 
   const newGames = games.filter(g => g.isNew);
   const discountGames = games.filter(g => g.discount > 0);
+
+  const addToCart = (game: Game) => {
+    const existingItem = cart.find(item => item.id === game.id);
+    
+    if (existingItem) {
+      toast({
+        title: "Игра уже в корзине",
+        description: `${game.title} уже добавлена в корзину`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setCart([...cart, { ...game, quantity: 1 }]);
+    toast({
+      title: "Добавлено в корзину",
+      description: `${game.title} добавлена в корзину`,
+    });
+  };
+
+  const removeFromCart = (gameId: number) => {
+    setCart(cart.filter(item => item.id !== gameId));
+  };
+
+  const getTotalPrice = () => {
+    return cart.reduce((total, item) => {
+      const itemPrice = item.discount > 0 
+        ? Math.round(item.price * (1 - item.discount / 100))
+        : item.price;
+      return total + (itemPrice * item.quantity);
+    }, 0);
+  };
+
+  const handlePayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    toast({
+      title: "Оплата успешна! 🎮",
+      description: `Ваш заказ на сумму ${getTotalPrice()}₽ обработан. Игры добавлены в библиотеку!`,
+    });
+
+    setCart([]);
+    setIsPaymentOpen(false);
+    setPaymentData({ cardNumber: '', cardName: '', expiry: '', cvv: '' });
+  };
+
+  const GameCard = ({ game, onAddToCart }: { game: Game; onAddToCart: (game: Game) => void }) => (
+    <Card className="bg-card/50 border-primary/30 hover:border-primary transition-all group overflow-hidden neon-border">
+      <div className="relative overflow-hidden">
+        <img 
+          src={game.image} 
+          alt={game.title}
+          className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+        />
+        {game.discount > 0 && (
+          <Badge className="absolute top-2 right-2 bg-secondary text-secondary-foreground neon-border-secondary">
+            -{game.discount}%
+          </Badge>
+        )}
+        {game.isNew && (
+          <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground neon-border">
+            NEW
+          </Badge>
+        )}
+      </div>
+      <CardContent className="p-4">
+        <h3 className="font-bold text-lg mb-2 text-foreground">{game.title}</h3>
+        <div className="flex items-center justify-between">
+          <Badge variant="outline" className="border-primary/50 text-primary">
+            {game.genre}
+          </Badge>
+          <div className="flex items-center gap-2">
+            {game.discount > 0 && (
+              <span className="text-muted-foreground line-through text-sm">
+                {game.price}₽
+              </span>
+            )}
+            <span className="text-primary font-bold text-xl">
+              {game.discount > 0 
+                ? Math.round(game.price * (1 - game.discount / 100))
+                : game.price}₽
+            </span>
+          </div>
+        </div>
+        <Button 
+          onClick={() => onAddToCart(game)}
+          className="w-full mt-4 neon-border bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground border-primary"
+        >
+          <Icon name="ShoppingBag" size={18} className="mr-2" />
+          Купить
+        </Button>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen bg-cyber-darker cyber-grid">
@@ -91,13 +211,140 @@ const Index = () => {
               <a href="#sales" className="text-foreground hover:text-secondary transition-colors">Акции</a>
               <a href="#genres" className="text-foreground hover:text-primary transition-colors">Жанры</a>
             </nav>
-            <Button className="neon-border bg-primary/10 hover:bg-primary/20 text-primary border-primary">
-              <Icon name="ShoppingCart" size={20} className="mr-2" />
-              Корзина
-            </Button>
+            
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button className="neon-border bg-primary/10 hover:bg-primary/20 text-primary border-primary relative">
+                  <Icon name="ShoppingCart" size={20} className="mr-2" />
+                  Корзина
+                  {cart.length > 0 && (
+                    <Badge className="absolute -top-2 -right-2 bg-secondary text-secondary-foreground">
+                      {cart.length}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="bg-cyber-dark border-primary/30 w-full sm:max-w-md">
+                <SheetHeader>
+                  <SheetTitle className="text-primary neon-glow">Корзина</SheetTitle>
+                </SheetHeader>
+                
+                <div className="mt-8 space-y-4">
+                  {cart.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">Корзина пуста</p>
+                  ) : (
+                    <>
+                      {cart.map((item) => (
+                        <div key={item.id} className="flex gap-4 p-3 rounded-lg bg-muted/20 border border-primary/20">
+                          <img src={item.image} alt={item.title} className="w-20 h-20 object-cover rounded" />
+                          <div className="flex-1">
+                            <h4 className="font-bold text-foreground">{item.title}</h4>
+                            <p className="text-primary font-bold">
+                              {item.discount > 0 
+                                ? Math.round(item.price * (1 - item.discount / 100))
+                                : item.price}₽
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Icon name="Trash2" size={18} />
+                          </Button>
+                        </div>
+                      ))}
+                      
+                      <div className="border-t border-primary/30 pt-4 mt-4">
+                        <div className="flex justify-between text-lg font-bold mb-4">
+                          <span className="text-foreground">Итого:</span>
+                          <span className="text-primary neon-glow">{getTotalPrice()}₽</span>
+                        </div>
+                        <Button 
+                          onClick={() => setIsPaymentOpen(true)}
+                          className="w-full neon-border bg-primary text-primary-foreground hover:bg-primary/90"
+                        >
+                          <Icon name="CreditCard" size={20} className="mr-2" />
+                          Оплатить
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
+
+      <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
+        <DialogContent className="bg-cyber-dark border-primary/30">
+          <DialogHeader>
+            <DialogTitle className="text-primary neon-glow">Оплата заказа</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Сумма к оплате: <span className="text-primary font-bold">{getTotalPrice()}₽</span>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handlePayment} className="space-y-4 mt-4">
+            <div>
+              <label className="text-sm text-foreground mb-2 block">Номер карты</label>
+              <Input
+                placeholder="1234 5678 9012 3456"
+                value={paymentData.cardNumber}
+                onChange={(e) => setPaymentData({...paymentData, cardNumber: e.target.value})}
+                className="bg-muted/50 border-primary/30 text-foreground"
+                maxLength={19}
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm text-foreground mb-2 block">Имя на карте</label>
+              <Input
+                placeholder="IVAN IVANOV"
+                value={paymentData.cardName}
+                onChange={(e) => setPaymentData({...paymentData, cardName: e.target.value})}
+                className="bg-muted/50 border-primary/30 text-foreground"
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-foreground mb-2 block">Срок действия</label>
+                <Input
+                  placeholder="MM/YY"
+                  value={paymentData.expiry}
+                  onChange={(e) => setPaymentData({...paymentData, expiry: e.target.value})}
+                  className="bg-muted/50 border-primary/30 text-foreground"
+                  maxLength={5}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm text-foreground mb-2 block">CVV</label>
+                <Input
+                  placeholder="123"
+                  type="password"
+                  value={paymentData.cvv}
+                  onChange={(e) => setPaymentData({...paymentData, cvv: e.target.value})}
+                  className="bg-muted/50 border-primary/30 text-foreground"
+                  maxLength={3}
+                  required
+                />
+              </div>
+            </div>
+            
+            <Button type="submit" className="w-full neon-border bg-primary text-primary-foreground hover:bg-primary/90">
+              <Icon name="Lock" size={20} className="mr-2" />
+              Подтвердить оплату {getTotalPrice()}₽
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <section id="home" className="py-20 px-4">
         <div className="container mx-auto">
@@ -172,49 +419,7 @@ const Index = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredGames.map((game) => (
-                  <Card key={game.id} className="bg-card/50 border-primary/30 hover:border-primary transition-all group overflow-hidden neon-border">
-                    <div className="relative overflow-hidden">
-                      <img 
-                        src={game.image} 
-                        alt={game.title}
-                        className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      {game.discount > 0 && (
-                        <Badge className="absolute top-2 right-2 bg-secondary text-secondary-foreground neon-border-secondary">
-                          -{game.discount}%
-                        </Badge>
-                      )}
-                      {game.isNew && (
-                        <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground neon-border">
-                          NEW
-                        </Badge>
-                      )}
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-bold text-lg mb-2 text-foreground">{game.title}</h3>
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="border-primary/50 text-primary">
-                          {game.genre}
-                        </Badge>
-                        <div className="flex items-center gap-2">
-                          {game.discount > 0 && (
-                            <span className="text-muted-foreground line-through text-sm">
-                              {game.price}₽
-                            </span>
-                          )}
-                          <span className="text-primary font-bold text-xl">
-                            {game.discount > 0 
-                              ? Math.round(game.price * (1 - game.discount / 100))
-                              : game.price}₽
-                          </span>
-                        </div>
-                      </div>
-                      <Button className="w-full mt-4 neon-border bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground border-primary">
-                        <Icon name="ShoppingBag" size={18} className="mr-2" />
-                        Купить
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <GameCard key={game.id} game={game} onAddToCart={addToCart} />
                 ))}
               </div>
             </TabsContent>
@@ -222,31 +427,7 @@ const Index = () => {
             <TabsContent value="new" className="mt-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {newGames.map((game) => (
-                  <Card key={game.id} className="bg-card/50 border-primary/30 hover:border-primary transition-all group overflow-hidden neon-border">
-                    <div className="relative overflow-hidden">
-                      <img 
-                        src={game.image} 
-                        alt={game.title}
-                        className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground neon-border animate-glow-pulse">
-                        NEW
-                      </Badge>
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-bold text-lg mb-2 text-foreground">{game.title}</h3>
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="border-primary/50 text-primary">
-                          {game.genre}
-                        </Badge>
-                        <span className="text-primary font-bold text-xl">{game.price}₽</span>
-                      </div>
-                      <Button className="w-full mt-4 neon-border bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground border-primary">
-                        <Icon name="ShoppingBag" size={18} className="mr-2" />
-                        Купить
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <GameCard key={game.id} game={game} onAddToCart={addToCart} />
                 ))}
               </div>
             </TabsContent>
@@ -254,38 +435,7 @@ const Index = () => {
             <TabsContent value="sales" className="mt-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {discountGames.map((game) => (
-                  <Card key={game.id} className="bg-card/50 border-secondary/30 hover:border-secondary transition-all group overflow-hidden neon-border-secondary">
-                    <div className="relative overflow-hidden">
-                      <img 
-                        src={game.image} 
-                        alt={game.title}
-                        className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <Badge className="absolute top-2 right-2 bg-secondary text-secondary-foreground neon-border-secondary animate-glow-pulse">
-                        -{game.discount}%
-                      </Badge>
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-bold text-lg mb-2 text-foreground">{game.title}</h3>
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge variant="outline" className="border-primary/50 text-primary">
-                          {game.genre}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground line-through text-sm">
-                          {game.price}₽
-                        </span>
-                        <span className="text-secondary font-bold text-2xl">
-                          {Math.round(game.price * (1 - game.discount / 100))}₽
-                        </span>
-                      </div>
-                      <Button className="w-full mt-4 neon-border-secondary bg-secondary/10 hover:bg-secondary text-secondary hover:text-secondary-foreground border-secondary">
-                        <Icon name="ShoppingBag" size={18} className="mr-2" />
-                        Купить со скидкой
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <GameCard key={game.id} game={game} onAddToCart={addToCart} />
                 ))}
               </div>
             </TabsContent>
