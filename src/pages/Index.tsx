@@ -102,6 +102,13 @@ const Index = () => {
     password: '',
     name: ''
   });
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [supportMessage, setSupportMessage] = useState({ name: '', email: '', message: '' });
+  const [chatMessages, setChatMessages] = useState<{text: string; isUser: boolean; time: string}[]>([
+    { text: 'Здравствуйте! Чем могу помочь?', isUser: false, time: new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}) }
+  ]);
+  const [chatInput, setChatInput] = useState('');
   const { toast } = useToast();
 
   const filteredGames = games.filter(game => {
@@ -552,12 +559,185 @@ const Index = () => {
       </section>
 
       <footer className="border-t border-primary/30 mt-20 py-8 bg-cyber-dark/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-muted-foreground">
-            © 2084 CYBER GAMES. Все права защищены в цифровом пространстве.
-          </p>
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
+            <div>
+              <h3 className="text-primary font-bold mb-3 neon-glow">CYBER GAMES</h3>
+              <p className="text-muted-foreground text-sm">Магазин игр будущего</p>
+            </div>
+            <div>
+              <h4 className="text-foreground font-bold mb-3">Контакты</h4>
+              <p className="text-muted-foreground text-sm mb-2">
+                <Icon name="Mail" size={16} className="inline mr-2" />
+                support@cybergames.net
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setIsSupportOpen(true)}
+                className="border-primary/30 text-primary hover:bg-primary/10"
+              >
+                <Icon name="Send" size={16} className="mr-2" />
+                Написать нам
+              </Button>
+            </div>
+            <div>
+              <h4 className="text-foreground font-bold mb-3">Поддержка</h4>
+              <p className="text-muted-foreground text-sm mb-2">Онлайн 24/7</p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setIsChatOpen(true)}
+                className="border-primary/30 text-primary hover:bg-primary/10"
+              >
+                <Icon name="MessageCircle" size={16} className="mr-2" />
+                Открыть чат
+              </Button>
+            </div>
+          </div>
+          <div className="text-center pt-6 border-t border-primary/30">
+            <p className="text-muted-foreground text-sm">
+              © 2084 CYBER GAMES. Все права защищены в цифровом пространстве.
+            </p>
+          </div>
         </div>
       </footer>
+
+      <Dialog open={isSupportOpen} onOpenChange={setIsSupportOpen}>
+        <DialogContent className="bg-cyber-dark border-primary/30">
+          <DialogHeader>
+            <DialogTitle className="text-primary neon-glow">Обратная связь</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Напишите нам, и мы ответим на вашу почту в течение 24 часов
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            toast({
+              title: "Сообщение отправлено!",
+              description: `Мы ответим вам на ${supportMessage.email} в ближайшее время`,
+            });
+            setSupportMessage({ name: '', email: '', message: '' });
+            setIsSupportOpen(false);
+          }} className="space-y-4 mt-4">
+            <div>
+              <label className="text-sm text-foreground mb-2 block">Ваше имя</label>
+              <Input
+                placeholder="Иван Иванов"
+                value={supportMessage.name}
+                onChange={(e) => setSupportMessage({...supportMessage, name: e.target.value})}
+                className="bg-muted/50 border-primary/30 text-foreground"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm text-foreground mb-2 block">Email</label>
+              <Input
+                type="email"
+                placeholder="example@cyber.net"
+                value={supportMessage.email}
+                onChange={(e) => setSupportMessage({...supportMessage, email: e.target.value})}
+                className="bg-muted/50 border-primary/30 text-foreground"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm text-foreground mb-2 block">Сообщение</label>
+              <textarea
+                placeholder="Опишите ваш вопрос..."
+                value={supportMessage.message}
+                onChange={(e) => setSupportMessage({...supportMessage, message: e.target.value})}
+                className="w-full min-h-[120px] px-3 py-2 rounded-md bg-muted/50 border border-primary/30 text-foreground focus:border-primary focus:outline-none resize-none"
+                required
+              />
+            </div>
+            
+            <Button type="submit" className="w-full neon-border bg-primary text-primary-foreground hover:bg-primary/90">
+              <Icon name="Send" size={20} className="mr-2" />
+              Отправить
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
+        <DialogContent className="bg-cyber-dark border-primary/30 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-primary neon-glow flex items-center gap-2">
+              <Icon name="MessageCircle" size={24} />
+              Чат поддержки
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Онлайн • Обычно отвечаем в течение 1 минуты
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <div className="h-[400px] overflow-y-auto space-y-3 p-4 bg-muted/20 rounded-lg border border-primary/20">
+              {chatMessages.map((msg, idx) => (
+                <div key={idx} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[80%] rounded-lg p-3 ${
+                    msg.isUser 
+                      ? 'bg-primary text-primary-foreground neon-border' 
+                      : 'bg-muted border border-primary/30 text-foreground'
+                  }`}>
+                    <p className="text-sm">{msg.text}</p>
+                    <p className="text-xs opacity-70 mt-1">{msg.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!chatInput.trim()) return;
+              
+              const userMsg = {
+                text: chatInput,
+                isUser: true,
+                time: new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})
+              };
+              
+              setChatMessages([...chatMessages, userMsg]);
+              setChatInput('');
+              
+              setTimeout(() => {
+                const botResponses = [
+                  'Спасибо за ваш вопрос! Специалист скоро подключится.',
+                  'Мы получили ваше сообщение. Уточните, пожалуйста, подробности.',
+                  'Понял вас! Сейчас проверю информацию и отвечу.',
+                ];
+                const botMsg = {
+                  text: botResponses[Math.floor(Math.random() * botResponses.length)],
+                  isUser: false,
+                  time: new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})
+                };
+                setChatMessages(prev => [...prev, botMsg]);
+              }, 1000);
+            }} className="flex gap-2">
+              <Input
+                placeholder="Введите сообщение..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                className="bg-muted/50 border-primary/30 text-foreground"
+              />
+              <Button type="submit" className="neon-border bg-primary text-primary-foreground hover:bg-primary/90">
+                <Icon name="Send" size={20} />
+              </Button>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Button
+        onClick={() => setIsChatOpen(true)}
+        className="fixed bottom-6 right-6 rounded-full w-14 h-14 neon-border bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg animate-glow-pulse z-50"
+      >
+        <Icon name="MessageCircle" size={24} />
+      </Button>
     </div>
   );
 };
