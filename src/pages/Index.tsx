@@ -87,11 +87,20 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [user, setUser] = useState<{email: string; name: string} | null>(null);
+  const [activeTab, setActiveTab] = useState('all');
   const [paymentData, setPaymentData] = useState({
     cardNumber: '',
     cardName: '',
     expiry: '',
     cvv: ''
+  });
+  const [authData, setAuthData] = useState({
+    email: '',
+    password: '',
+    name: ''
   });
   const { toast } = useToast();
 
@@ -205,25 +214,48 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold neon-glow text-primary">CYBER GAMES</h1>
             <nav className="flex gap-6">
-              <a href="#home" className="text-foreground hover:text-primary transition-colors">Главная</a>
-              <a href="#catalog" className="text-foreground hover:text-primary transition-colors">Каталог</a>
-              <a href="#new" className="text-foreground hover:text-primary transition-colors">Новинки</a>
-              <a href="#sales" className="text-foreground hover:text-secondary transition-colors">Акции</a>
-              <a href="#genres" className="text-foreground hover:text-primary transition-colors">Жанры</a>
+              <button onClick={() => {setActiveTab('all'); document.getElementById('catalog')?.scrollIntoView({behavior: 'smooth'})}} className="text-foreground hover:text-primary transition-colors">Главная</button>
+              <button onClick={() => {setActiveTab('all'); document.getElementById('catalog')?.scrollIntoView({behavior: 'smooth'})}} className="text-foreground hover:text-primary transition-colors">Каталог</button>
+              <button onClick={() => {setActiveTab('new'); document.getElementById('catalog')?.scrollIntoView({behavior: 'smooth'})}} className="text-foreground hover:text-primary transition-colors">Новинки</button>
+              <button onClick={() => {setActiveTab('sales'); document.getElementById('catalog')?.scrollIntoView({behavior: 'smooth'})}} className="text-foreground hover:text-secondary transition-colors">Акции</button>
+              <button onClick={() => {setActiveTab('all'); setSelectedGenre('Все'); document.getElementById('catalog')?.scrollIntoView({behavior: 'smooth'})}} className="text-foreground hover:text-primary transition-colors">Жанры</button>
             </nav>
             
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button className="neon-border bg-primary/10 hover:bg-primary/20 text-primary border-primary relative">
-                  <Icon name="ShoppingCart" size={20} className="mr-2" />
-                  Корзина
-                  {cart.length > 0 && (
-                    <Badge className="absolute -top-2 -right-2 bg-secondary text-secondary-foreground">
-                      {cart.length}
-                    </Badge>
-                  )}
+            <div className="flex gap-2">
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-primary neon-glow">{user.name}</span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setUser(null)}
+                    className="border-primary/30 text-muted-foreground hover:text-primary"
+                  >
+                    Выйти
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  onClick={() => {setIsAuthOpen(true); setAuthMode('login')}}
+                  className="neon-border bg-primary/10 hover:bg-primary/20 text-primary border-primary"
+                >
+                  <Icon name="User" size={20} className="mr-2" />
+                  Вход
                 </Button>
-              </SheetTrigger>
+              )}
+              
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button className="neon-border bg-primary/10 hover:bg-primary/20 text-primary border-primary relative">
+                    <Icon name="ShoppingCart" size={20} className="mr-2" />
+                    Корзина
+                    {cart.length > 0 && (
+                      <Badge className="absolute -top-2 -right-2 bg-secondary text-secondary-foreground">
+                        {cart.length}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
               <SheetContent className="bg-cyber-dark border-primary/30 w-full sm:max-w-md">
                 <SheetHeader>
                   <SheetTitle className="text-primary neon-glow">Корзина</SheetTitle>
@@ -277,6 +309,81 @@ const Index = () => {
           </div>
         </div>
       </header>
+
+      <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
+        <DialogContent className="bg-cyber-dark border-primary/30">
+          <DialogHeader>
+            <DialogTitle className="text-primary neon-glow">
+              {authMode === 'login' ? 'Вход в аккаунт' : 'Регистрация'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (authMode === 'register') {
+              setUser({ email: authData.email, name: authData.name });
+              toast({ title: "Регистрация успешна!", description: `Добро пожаловать, ${authData.name}!` });
+            } else {
+              setUser({ email: authData.email, name: authData.email.split('@')[0] });
+              toast({ title: "Вход выполнен!", description: "Добро пожаловать!" });
+            }
+            setIsAuthOpen(false);
+            setAuthData({ email: '', password: '', name: '' });
+          }} className="space-y-4 mt-4">
+            {authMode === 'register' && (
+              <div>
+                <label className="text-sm text-foreground mb-2 block">Имя</label>
+                <Input
+                  placeholder="Ваше имя"
+                  value={authData.name}
+                  onChange={(e) => setAuthData({...authData, name: e.target.value})}
+                  className="bg-muted/50 border-primary/30 text-foreground"
+                  required
+                />
+              </div>
+            )}
+            
+            <div>
+              <label className="text-sm text-foreground mb-2 block">Email</label>
+              <Input
+                type="email"
+                placeholder="example@cyber.net"
+                value={authData.email}
+                onChange={(e) => setAuthData({...authData, email: e.target.value})}
+                className="bg-muted/50 border-primary/30 text-foreground"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm text-foreground mb-2 block">Пароль</label>
+              <Input
+                type="password"
+                placeholder="••••••••"
+                value={authData.password}
+                onChange={(e) => setAuthData({...authData, password: e.target.value})}
+                className="bg-muted/50 border-primary/30 text-foreground"
+                required
+              />
+            </div>
+            
+            <Button type="submit" className="w-full neon-border bg-primary text-primary-foreground hover:bg-primary/90">
+              {authMode === 'login' ? 'Войти' : 'Зарегистрироваться'}
+            </Button>
+            
+            <p className="text-center text-sm text-muted-foreground">
+              {authMode === 'login' ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}{' '}
+              <button
+                type="button"
+                onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
+                className="text-primary hover:underline"
+              >
+                {authMode === 'login' ? 'Зарегистрируйтесь' : 'Войдите'}
+              </button>
+            </p>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
         <DialogContent className="bg-cyber-dark border-primary/30">
@@ -384,7 +491,7 @@ const Index = () => {
             </div>
           </div>
 
-          <Tabs defaultValue="all" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full justify-start bg-muted/50 border border-primary/30">
               <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 Все игры
